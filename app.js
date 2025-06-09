@@ -58,7 +58,7 @@ const test = gl.shader(
     float hilits(vec2 uv, float ga, float bet, vec2 center){
     float s = 0.;
     uv -= .5;
-    uv *= rot(atan(bet,ga));
+    uv *= rot(-atan(bet,ga));
     uv += vec2(bet, ga);
     // uv += .5;
 
