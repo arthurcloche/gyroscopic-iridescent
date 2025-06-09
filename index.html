@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gyroscopic Shader</title>
+</head>
+<style>
+    body{
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #container{
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+    }
+    .main{
+        width:60%;
+        aspect-ratio: 4/2;
+        overflow: hidden;
+        border-radius: 16px;
+        position: relative;
+    }
+    .text {
+        position: relative;
+        z-index: 1;
+        font-family: Arial, Helvetica, sans-serif;
+        font-weight: 800;
+        font-size: 4rem;
+        color: #334;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+    }
+    .left{
+        position: absolute;       
+        left : 20px;
+        height: auto;
+        font-size: 2rem;
+    }
+    .right{
+        position: absolute;       
+        right : 20px;
+        height: auto;
+        font-size: 2rem;
+    }
+    .top{
+        top : 14px;
+    }
+    .bottom{
+        bottom : 14px;
+    }
+
+
+
+</style>
+<body>
+    <div class="main">
+        <p class="text">💎</p>
+        <!-- <p class="text left top">So shiny</p>
+        <p class="text left bottom">So shiny</p>
+        <p class="text right top">So shiny</p>
+        <p class="text right bottom">So shiny</p> -->
+        <div id="container"></div>
+    </div>
+    <script type="module" src="./app.js"></script>
+</body>
+</html>
