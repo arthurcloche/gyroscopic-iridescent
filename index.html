@@ -633,7 +633,7 @@
         };
 
         window.addNewSticker = () => {
-            if(stickers.length > 15) return
+            if(stickers.length > 16 || (this.orientationListenerActive && stickers.length > 8)) return
             const stickerCount = document.querySelectorAll('.sticker').length;
             const newId = `sticker${stickerCount + 1}`;
             
