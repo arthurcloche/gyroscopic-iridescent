@@ -309,8 +309,8 @@
         // Mouse tracking for desktop
         if (isDesktop && !isTouchDevice) {
             document.addEventListener('mousemove', (e) => {
-                mousePosition.x = Math.min(0.75,Math.max(0.25,e.clientX / window.innerWidth));
-                mousePosition.y = Math.min(0.75,Math.max(0.25,e.clientY / window.innerHeight));
+                mousePosition.x = e.clientX / window.innerWidth;
+                mousePosition.y = e.clientY / window.innerHeight;
             });
         }
 

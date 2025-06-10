@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iridescent Stickers Example</title>
+    <style>
+        body {
+            background: #1a1a1a;
+            color: white;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .sticker {
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .sticker-small {
+            width: 200px;
+            height: 200px;
+        }
+
+        .sticker-wide {
+            width: 400px;
+            height: 150px;
+        }
+
+        .sticker-card {
+            width: 300px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sticker-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+
+        .controls {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .control-group {
+            margin: 10px 0;
+        }
+
+        label {
+            display: inline-block;
+            width: 150px;
+        }
+
+        input[type="range"] {
+            width: 200px;
+        }
+
+        button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056CC;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌈 Iridescent Stickers Demo</h1>
+    <p>Tilt your device to see the magical iridescent effect!</p>
+
+    <div class="sticker sticker-small" id="sticker1">
+        <div class="sticker-text">💎 Gem</div>
+    </div>
+
+    <div class="sticker sticker-wide" id="sticker2">
+        <div class="sticker-text">✨ Magical Banner ✨</div>
+    </div>
+
+    <div class="sticker sticker-card" id="sticker3">
+        <div class="sticker-text">🔮 Holographic Card</div>
+    </div>
+
+    <div class="controls">
+        <h3>Real-time Controls</h3>
+        
+        <div class="control-group">
+            <label>Plasma Scale:</label>
+            <input type="range" id="plasmaScale" min="0.5" max="5" step="0.1" value="2">
+            <span id="plasmaValue">2.0</span>
+        </div>
+        
+        <div class="control-group">
+            <label>Highlight Power:</label>
+            <input type="range" id="highlightPower" min="1" max="20" step="1" value="8">
+            <span id="powerValue">8</span>
+        </div>
+        
+        <div class="control-group">
+            <label>Highlight Mix:</label>
+            <input type="range" id="highlightMix" min="0" max="1" step="0.05" value="0.25">
+            <span id="mixValue">0.25</span>
+        </div>
+
+        <div class="control-group">
+            <button onclick="stopAll()">⏸️ Stop All</button>
+            <button onclick="startAll()">▶️ Start All</button>
+            <button onclick="createNewSticker()">➕ Add Random Sticker</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import IridescentSticker from './IridescentSticker.js';
+
+        // Create different stickers with different settings
+        const sticker1 = new IridescentSticker('#sticker1', {
+            plasmaScale: 2.0,
+            highlightPower: 8.0,
+            highlightMix: 0.25
+        });
+
+        const sticker2 = new IridescentSticker('#sticker2', {
+            plasmaScale: 3.0,
+            highlightPower: 12.0,
+            highlightMix: 0.3
+        });
+
+        const sticker3 = new IridescentSticker('#sticker3', {
+            plasmaScale: 1.5,
+            highlightPower: 6.0,
+            highlightMix: 0.4
+        });
+
+        // Store all stickers for global controls
+        window.stickers = [sticker1, sticker2, sticker3];
+
+        // Real-time controls
+        const plasmaSlider = document.getElementById('plasmaScale');
+        const powerSlider = document.getElementById('highlightPower');
+        const mixSlider = document.getElementById('highlightMix');
+        
+        const plasmaValue = document.getElementById('plasmaValue');
+        const powerValue = document.getElementById('powerValue');
+        const mixValue = document.getElementById('mixValue');
+
+        plasmaSlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            plasmaValue.textContent = value.toFixed(1);
+            sticker1.updateOptions({ plasmaScale: value });
+        });
+
+        powerSlider.addEventListener('input', (e) => {
+            const value = parseInt(e.target.value);
+            powerValue.textContent = value;
+            sticker1.updateOptions({ highlightPower: value });
+        });
+
+        mixSlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            mixValue.textContent = value.toFixed(2);
+            sticker1.updateOptions({ highlightMix: value });
+        });
+
+        // Global control functions
+        window.stopAll = () => {
+            window.stickers.forEach(sticker => sticker.stop());
+        };
+
+        window.startAll = () => {
+            window.stickers.forEach(sticker => sticker.start());
+        };
+
+        window.createNewSticker = () => {
+            const container = document.createElement('div');
+            container.className = 'sticker sticker-small';
+            container.style.marginTop = '20px';
+            container.innerHTML = '<div class="sticker-text">🆕 New!</div>';
+            document.body.appendChild(container);
+
+            const newSticker = new IridescentSticker(container, {
+                plasmaScale: Math.random() * 3 + 1,
+                highlightPower: Math.random() * 15 + 5,
+                highlightMix: Math.random() * 0.5 + 0.1
+            });
+
+            window.stickers.push(newSticker);
+        };
+    </script>
+</body>
+</html> 
