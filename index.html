@@ -210,6 +210,61 @@
             color: black;
         }
 
+        /* Device Orientation Permission Button */
+        .orientation-permission {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2000;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .orientation-permission.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .permission-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            margin-bottom: 15px;
+            display: block;
+            width: 100%;
+        }
+
+        .permission-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .permission-button:active {
+            transform: translateY(0);
+        }
+
+        .permission-text {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            margin: 0;
+            line-height: 1.4;
+        }
+
         /* Desktop styles */
         @media (min-width: 768px) {
             .controls {
@@ -294,6 +349,14 @@
         </div>
     </div>
 
+    <!-- Device Orientation Permission Button for iOS -->
+    <div class="orientation-permission" id="orientationPermission">
+        <button class="permission-button" id="permissionButton">
+            📱 Enable Tilt Controls
+        </button>
+        <p class="permission-text">Tap to enable device tilt for interactive effects</p>
+    </div>
+
     <script type="module">
         import IridescentSticker from './IridescentSticker.js';
 
@@ -309,6 +372,73 @@
 
         // Detect if device has touch support
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+        // Device orientation permission state
+        let orientationPermissionGranted = false;
+        let needsOrientationPermission = false;
+
+        // Check if we need to request device orientation permission (iOS 13+)
+        function checkOrientationPermission() {
+            // Only check on mobile touch devices
+            if (!isTouchDevice || isDesktop) {
+                return false;
+            }
+
+            // Check if DeviceOrientationEvent.requestPermission exists (iOS 13+)
+            if (typeof DeviceOrientationEvent !== 'undefined' && 
+                typeof DeviceOrientationEvent.requestPermission === 'function') {
+                return true;
+            }
+
+            // For older iOS or other mobile devices, assume permission is granted
+            orientationPermissionGranted = true;
+            return false;
+        }
+
+        // Request device orientation permission
+        async function requestOrientationPermission() {
+            try {
+                const permission = await DeviceOrientationEvent.requestPermission();
+                if (permission === 'granted') {
+                    orientationPermissionGranted = true;
+                    hideOrientationPermissionButton();
+                    
+                    // Re-initialize stickers with orientation enabled
+                    stickers.forEach(({ sticker }) => {
+                        sticker.updateOptions({
+                            useMousePosition: false // Switch to device orientation
+                        });
+                    });
+                    
+                    return true;
+                } else {
+                    console.warn('Device orientation permission denied');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error requesting device orientation permission:', error);
+                return false;
+            }
+        }
+
+        // Show orientation permission button
+        function showOrientationPermissionButton() {
+            const permissionDiv = document.getElementById('orientationPermission');
+            if (permissionDiv) {
+                permissionDiv.classList.add('show');
+            }
+        }
+
+        // Hide orientation permission button
+        function hideOrientationPermissionButton() {
+            const permissionDiv = document.getElementById('orientationPermission');
+            if (permissionDiv) {
+                permissionDiv.classList.remove('show');
+            }
+        }
+
+        // Initialize orientation permission check
+        needsOrientationPermission = checkOrientationPermission();
 
         // Mouse tracking for desktop
         if (isDesktop && !isTouchDevice) {
@@ -342,17 +472,24 @@
                             element.classList.add('loaded');
                         }, index * 10);
                     });
+
+                    // Show orientation permission button if needed
+                    if (needsOrientationPermission && !orientationPermissionGranted) {
+                        setTimeout(() => {
+                            showOrientationPermissionButton();
+                        }, 500); // Show after stickers are loaded
+                    }
                 }, 10);
             }
         }
 
         // Create stickers with different effects
         const stickerConfigs = [
-            { id: 'sticker1', plasmaScale: 2.5, highlightPower: 10, highlightMix: 0.3 },
-            { id: 'sticker2', plasmaScale: 1.8, highlightPower: 15, highlightMix: 0.4 },
-            { id: 'sticker3', plasmaScale: 3.2, highlightPower: 8, highlightMix: 0.25 },
+            { id: 'sticker1', plasmaScale: 2.0, highlightPower: 10, highlightMix: 0.3 },
+            { id: 'sticker2', plasmaScale: 2.0, highlightPower: 15, highlightMix: 0.4 },
+            { id: 'sticker3', plasmaScale: 2.0, highlightPower: 8, highlightMix: 0.25 },
             { id: 'sticker4', plasmaScale: 2.0, highlightPower: 12, highlightMix: 0.35 },
-            { id: 'sticker5', plasmaScale: 4.0, highlightPower: 20, highlightMix: 0.5 }
+            { id: 'sticker5', plasmaScale: 2.0, highlightPower: 20, highlightMix: 0.5 }
         ];
 
         // Initialize stickers
@@ -369,7 +506,7 @@
                     highlightPower: config.highlightPower,
                     highlightMix: config.highlightMix,
                     rotation: rotationRad,
-                    useMousePosition: isDesktop && !isTouchDevice,
+                    useMousePosition: isDesktop && !isTouchDevice && !needsOrientationPermission,
                     mousePosition: mousePosition,
                     onReady: checkAllLoaded
                 });
@@ -496,6 +633,7 @@
         };
 
         window.addNewSticker = () => {
+            if(stickers.length > 15) return
             const stickerCount = document.querySelectorAll('.sticker').length;
             const newId = `sticker${stickerCount + 1}`;
             
@@ -513,11 +651,11 @@
             document.body.appendChild(container);
 
             const newSticker = new IridescentSticker(`#${newId}`, {
-                plasmaScale: Math.random() * 3 + 1.5,
-                highlightPower: Math.random() * 15 + 8,
-                highlightMix: Math.random() * 0.4 + 0.2,
+                plasmaScale: 1.5,
+                highlightPower: 8,
+                highlightMix: 0.2,
                 rotation: rotationRad,
-                useMousePosition: isDesktop && !isTouchDevice,
+                useMousePosition: isDesktop && !isTouchDevice && !needsOrientationPermission,
                 mousePosition: mousePosition
             });
 
@@ -565,6 +703,14 @@
 
         // Prevent default drag behavior on images and text
         document.addEventListener('dragstart', (e) => e.preventDefault());
+
+        // Add event listener for orientation permission button
+        document.getElementById('permissionButton').addEventListener('click', async () => {
+            const success = await requestOrientationPermission();
+            if (success) {
+                console.log('Device orientation permission granted');
+            }
+        });
     </script>
 </body>
 </html> 

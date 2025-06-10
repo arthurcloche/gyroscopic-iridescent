@@ -20,6 +20,7 @@ class IridescentSticker {
     this.shader = null;
     this.gl = null;
     this.isReady = false;
+    this.orientationListenerActive = false;
 
     // Initialize
     this.init(selector);
@@ -61,6 +62,7 @@ class IridescentSticker {
 
     window.addEventListener("deviceorientation", handleOrientation);
     window.addEventListener("deviceorientationabsolute", handleOrientation);
+    this.orientationListenerActive = true;
   }
 
   createShader() {
@@ -182,21 +184,17 @@ class IridescentSticker {
 
   // Update options dynamically
   updateOptions(newOptions) {
-    this.options = { ...this.options, ...newOptions };
+    // Update internal options
+    Object.assign(this.options, newOptions);
 
-    if (this.shader) {
-      if (newOptions.plasmaScale !== undefined) {
-        this.shader.updateUniform("uPlasmaScale", newOptions.plasmaScale);
-      }
-      if (newOptions.highlightPower !== undefined) {
-        this.shader.updateUniform("uHighlightPower", newOptions.highlightPower);
-      }
-      if (newOptions.highlightMix !== undefined) {
-        this.shader.updateUniform("uHighlightMix", newOptions.highlightMix);
-      }
-      if (newOptions.rotation !== undefined) {
-        this.shader.updateUniform("uRotation", newOptions.rotation);
-      }
+    // If switching to device orientation, set up the listener
+    if (!this.options.useMousePosition && !this.orientationListenerActive) {
+      this.setupOrientationListener();
+    }
+
+    // Update shader uniforms if rotation changed
+    if (newOptions.rotation !== undefined) {
+      this.shader.updateUniform("uRotation", newOptions.rotation);
     }
   }
 
