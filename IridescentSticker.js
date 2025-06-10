@@ -66,7 +66,7 @@ class IridescentSticker {
   createShader() {
     this.shader = this.gl.shader(
       `#version 300 es
-        precision highp float;
+        precision mediump float;
         uniform float glTime;
         uniform float uAlpha;
         uniform float uBeta;
