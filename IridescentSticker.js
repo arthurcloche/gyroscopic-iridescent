@@ -9,6 +9,7 @@ class IridescentSticker {
       highlightMix: 0.25,
       useMousePosition: false,
       mousePosition: { x: 0.5, y: 0.5 },
+      rotation: 0,
       onReady: null,
       ...options,
     };
@@ -73,6 +74,7 @@ class IridescentSticker {
         uniform float uPlasmaScale;
         uniform float uHighlightPower;
         uniform float uHighlightMix;
+        uniform float uRotation;
         in vec2 glUV;
         out vec4 fragColor;
 
@@ -117,12 +119,17 @@ class IridescentSticker {
         }
 
         void main() {
-          float x = mix(glUV.x, 1.-glUV.x, uGamma);
-          float y = mix(glUV.y, 1.-glUV.y, uBeta);
-          vec2 center = vec2(x,y);
-          float hilit = hilits(glUV, uGamma, uBeta, center);
+          // Counter-rotate UV coordinates to counteract container rotation
+          vec2 uv = glUV - 0.5; // Center the coordinates
+          uv *= rot(-uRotation); // Counter-rotate by negative rotation angle
+          uv += 0.5; // Move back to 0-1 range
           
-          vec3 color = plasma(glUV-center, uPlasmaScale);
+          float x = mix(uv.x, 1.-uv.x, uGamma);
+          float y = mix(uv.y, 1.-uv.y, uBeta);
+          vec2 center = vec2(x,y);
+          float hilit = hilits(uv, uGamma, uBeta, center);
+          
+          vec3 color = plasma(uv-center, uPlasmaScale);
           vec3 m = color;//mix(color, color * (1.0 - uHighlightMix) + uHighlightMix, pow(hilit, uHighlightPower));
           vec3 render = clamp(m, vec3(0.), vec3(1.));
           render = pow(render, vec3(1.0/2.2)); // gamma correction
@@ -136,6 +143,7 @@ class IridescentSticker {
         uPlasmaScale: this.options.plasmaScale,
         uHighlightPower: this.options.highlightPower,
         uHighlightMix: this.options.highlightMix,
+        uRotation: this.options.rotation || 0,
       }
     );
 
@@ -185,6 +193,9 @@ class IridescentSticker {
       }
       if (newOptions.highlightMix !== undefined) {
         this.shader.updateUniform("uHighlightMix", newOptions.highlightMix);
+      }
+      if (newOptions.rotation !== undefined) {
+        this.shader.updateUniform("uRotation", newOptions.rotation);
       }
     }
   }

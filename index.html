@@ -66,7 +66,7 @@
             overflow: hidden;
             cursor: grab;
             transition: box-shadow 0.2s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.0);
             z-index: 10;
             opacity: 0;
             transition: opacity 0.5s ease, box-shadow 0.2s ease;
@@ -78,7 +78,7 @@
 
         .sticker:hover {
             transform: scale(1.05);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.125);
         }
 
         .sticker:active {
@@ -162,7 +162,7 @@
         }
 
         .control-button {
-            background: black;
+            background: #333;
             color: white;
             border: 2px solid white;
             padding: 12px 20px;
@@ -171,7 +171,7 @@
             font-size: 14px;
             transition: all 0.2s;
             font-weight: 600;
-            font-family: "Sofia Sans Extra Condensed", sans-serif;
+            font-family: sans-serif;
         }
 
         .control-button:hover {
@@ -248,6 +248,10 @@
         .sticker canvas {
             position: relative;
             z-index: 1;
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+            object-fit: cover;
         }
     </style>
 </head>
@@ -263,23 +267,23 @@
 
     <!-- Draggable Stickers with random rotations -->
     <div class="sticker sticker-small" id="sticker1" style="top: 20%; left: 10%;">
-        <div class="sticker-text">MAGIC</div>
+        <div class="sticker-text"></div>
     </div>
 
     <div class="sticker sticker-medium" id="sticker2" style="top: 15%; right: 15%;">
-        <div class="sticker-text">GEM</div>
+        <div class="sticker-text"></div>
     </div>
 
     <div class="sticker sticker-large" id="sticker3" style="bottom: 25%; left: 5%;">
-        <div class="sticker-text">RAINBOW</div>
+        <div class="sticker-text"></div>
     </div>
 
     <div class="sticker sticker-round" id="sticker4" style="top: 45%; left: 60%;">
-        <div class="sticker-text">STAR</div>
+        <div class="sticker-text"></div>
     </div>
 
     <div class="sticker sticker-small" id="sticker5" style="bottom: 30%; right: 20%;">
-        <div class="sticker-text">SHINE</div>
+        <div class="sticker-text"></div>
     </div>
 
     <div class="controls">
@@ -356,17 +360,20 @@
             const element = document.getElementById(config.id);
             if (element) {
                 // Apply random rotation
-                element.style.transform = `rotate(${getRandomRotation()}deg)`;
+                const rotationDeg = getRandomRotation();
+                const rotationRad = (rotationDeg * Math.PI) / 180; // Convert to radians for shader
+                element.style.transform = `rotate(${rotationDeg}deg)`;
                 
                 const sticker = new IridescentSticker(`#${config.id}`, {
                     plasmaScale: config.plasmaScale,
                     highlightPower: config.highlightPower,
                     highlightMix: config.highlightMix,
+                    rotation: rotationRad,
                     useMousePosition: isDesktop && !isTouchDevice,
                     mousePosition: mousePosition,
                     onReady: checkAllLoaded
                 });
-                stickers.push({ element, sticker, id: config.id });
+                stickers.push({ element, sticker, id: config.id, rotation: rotationRad });
                 makeDraggable(element);
             }
         });
@@ -460,18 +467,25 @@
 
         // Control functions
         window.randomizePositions = () => {
-            stickers.forEach(({ element }) => {
+            stickers.forEach(({ element, sticker }) => {
                 const maxX = window.innerWidth - element.offsetWidth;
                 const maxY = window.innerHeight - element.offsetHeight - (isDesktop ? 0 : 80);
                 
                 const x = Math.random() * maxX;
                 const y = Math.random() * maxY;
                 
+                // Generate new rotation and update both CSS and shader
+                const rotationDeg = getRandomRotation();
+                const rotationRad = (rotationDeg * Math.PI) / 180;
+                
                 element.style.left = x + 'px';
                 element.style.top = y + 'px';
                 element.style.right = 'auto';
                 element.style.bottom = 'auto';
-                element.style.transform = `rotate(${getRandomRotation()}deg)`;
+                element.style.transform = `rotate(${rotationDeg}deg)`;
+                
+                // Update shader rotation uniform
+                sticker.updateOptions({ rotation: rotationRad });
                 
                 // Add bounce animation
                 element.style.transition = 'transform 0.3s ease';
@@ -490,8 +504,11 @@
             container.id = newId;
             container.style.top = '20%';
             container.style.left = '20%';
-            container.style.transform = `rotate(${getRandomRotation()}deg)`;
-            container.innerHTML = '<div class="sticker-text">NEW</div>';
+            
+            // Generate rotation for new sticker
+            const rotationDeg = getRandomRotation();
+            const rotationRad = (rotationDeg * Math.PI) / 180;
+            container.style.transform = `rotate(${rotationDeg}deg)`;
             
             document.body.appendChild(container);
 
@@ -499,11 +516,12 @@
                 plasmaScale: Math.random() * 3 + 1.5,
                 highlightPower: Math.random() * 15 + 8,
                 highlightMix: Math.random() * 0.4 + 0.2,
+                rotation: rotationRad,
                 useMousePosition: isDesktop && !isTouchDevice,
                 mousePosition: mousePosition
             });
 
-            stickers.push({ element: container, sticker: newSticker, id: newId });
+            stickers.push({ element: container, sticker: newSticker, id: newId, rotation: rotationRad });
             makeDraggable(container);
             
             // Bounce in animation
@@ -524,16 +542,23 @@
                 { bottom: '30%', right: '20%' }
             ];
 
-            stickers.slice(0, 5).forEach(({ element }, index) => {
+            stickers.slice(0, 5).forEach(({ element, sticker }, index) => {
                 if (positions[index]) {
+                    // Generate new rotation for reset
+                    const rotationDeg = getRandomRotation();
+                    const rotationRad = (rotationDeg * Math.PI) / 180;
+                    
                     Object.assign(element.style, {
                         ...positions[index],
                         right: positions[index].right || 'auto',
                         bottom: positions[index].bottom || 'auto',
                         left: positions[index].left || 'auto',
                         top: positions[index].top || 'auto',
-                        transform: `rotate(${getRandomRotation()}deg)`
+                        transform: `rotate(${rotationDeg}deg)`
                     });
+                    
+                    // Update shader rotation uniform
+                    sticker.updateOptions({ rotation: rotationRad });
                 }
             });
         };
