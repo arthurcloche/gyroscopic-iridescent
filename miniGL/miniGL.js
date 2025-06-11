@@ -1807,7 +1807,10 @@ class miniGL {
     // Load requested extensions
     this.extensions = {};
     this.extensionStatus = {};
-
+    const allExtensions = this.gl.getSupportedExtensions();
+    this.floatSupported = false;
+    console.log(allExtensions);
+    /*
     for (const extName of this.options.extensions) {
       try {
         const ext = this.gl.getExtension(extName);
@@ -1825,13 +1828,18 @@ class miniGL {
       }
     }
 
-    // Check for float texture support based on loaded extensions
-    this.floatSupported = false;
-    if (this.extensions["EXT_color_buffer_float"]) {
+    // Check for float texture support by directly querying WebGL context
+    
+
+    // Try to get float texture extensions directly from WebGL context
+    const colorBufferFloat = this.gl.getExtension("EXT_color_buffer_float");
+    const floatBlend = this.gl.getExtension("EXT_float_blend");
+
+    if (colorBufferFloat) {
       this.floatSupported = true;
 
       // Enhanced float support check for Apple devices
-      if (this.extensions["EXT_float_blend"]) {
+      if (floatBlend) {
         console.log("✓ Float blending supported (Apple compatible)");
       } else {
         console.warn(
@@ -1839,7 +1847,7 @@ class miniGL {
         );
       }
     }
-
+    */
     this.gl.enable(this.gl.BLEND);
     this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
     this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -2640,7 +2648,7 @@ class miniGL {
 
   // Extension support utilities
   hasExtension(name) {
-    return this.extensionStatus[name] || false;
+    return !!this.gl.getExtension(name);
   }
 
   getExtension(name) {
