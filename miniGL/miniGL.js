@@ -1808,8 +1808,9 @@ class miniGL {
     this.extensions = {};
     this.extensionStatus = {};
     const allExtensions = this.gl.getSupportedExtensions();
-    this.floatSupported = false;
-    console.log(allExtensions);
+    allExtensions.forEach((extension) => this.gl.getExtension(extension));
+    this.floatSupported = true;
+    // console.log(allExtensions);
     /*
     for (const extName of this.options.extensions) {
       try {
